@@ -1,5 +1,5 @@
 from .token import Token, TokenType
-from .lox import error
+from .lox import scanner_error
 from typing import List, Any
 
 keywords = {
@@ -71,7 +71,7 @@ class Scanner:
       elif self.is_alpha(c):
         self.identifier()
       else:
-        error(self.line, "Unexpected character.")
+        scanner_error(self.line, "Unexpected character.")
 
   def identifier(self) -> None:
     while self.is_alphanumeric(self.peek()): self.advance()
@@ -109,13 +109,12 @@ class Scanner:
       self.advance()
 
     if self.is_at_end():
-      error(self.line, "Unterminated string.")
+      scanner_error(self.line, "Unterminated string.")
       return
     
     self.advance()
 
     value = self.source[self.start+1:self.current-1]
-    print(value)
     self.add_token(TokenType.STRING, value)
 
   def peek(self) -> str:

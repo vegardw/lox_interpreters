@@ -1,9 +1,16 @@
 import sys
+from lox import Token, TokenType
 
 had_error = False
 
-def error(line: int, message: str) -> None:
+def scanner_error(line: int, message: str) -> None:
   report(line, '', message)
+
+def parser_error(token: Token, message: str) -> None:
+  if token.type == TokenType.EOF:
+    report(token.line, " at end", message)
+  else:
+    report(token.line, f" at '{token.lexeme,}'", message)
 
 def report(line: int, where: str, message: str) -> None:
   global had_error
@@ -13,11 +20,17 @@ def report(line: int, where: str, message: str) -> None:
 
 def run(source) -> None:
   from .scanner import Scanner
+  from .parser import Parser
+  from .ast_printer import AstPrinter
+
   scanner = Scanner(source)
   tokens = scanner.scan_tokens()
+  parser = Parser(tokens)
+  expression = parser.parse()
 
-  for token in tokens:
-    print(token)
+  if had_error: return
+
+  print(AstPrinter().print(expression))
 
 def run_file(filename) -> None:
   global had_error
