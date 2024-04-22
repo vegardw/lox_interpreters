@@ -1,7 +1,12 @@
 import sys
-from lox import Token, TokenType
+from . import Token, TokenType
 
 had_error = False
+had_runtime_error = False
+
+def runtime_error(error):
+  print(f'{str(error)}\n[line: {error.token.line}]', file=sys.stderr)
+  had_runtime_error = True
 
 def scanner_error(line: int, message: str) -> None:
   report(line, '', message)
@@ -21,16 +26,18 @@ def report(line: int, where: str, message: str) -> None:
 def run(source) -> None:
   from .scanner import Scanner
   from .parser import Parser
-  from .ast_printer import AstPrinter
+  from .interpreter import Interpreter
+
 
   scanner = Scanner(source)
+  interpreter = Interpreter()
   tokens = scanner.scan_tokens()
   parser = Parser(tokens)
   expression = parser.parse()
 
   if had_error: return
 
-  print(AstPrinter().print(expression))
+  interpreter.interpret(expression)
 
 def run_file(filename) -> None:
   global had_error
@@ -41,6 +48,9 @@ def run_file(filename) -> None:
 
   if had_error:
     sys.exit(65)
+
+  if had_runtime_error:
+    sys.exit(70)
 
 def run_prompt() -> None:
   global had_error
