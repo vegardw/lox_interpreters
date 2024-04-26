@@ -33,11 +33,11 @@ def run(source) -> None:
   interpreter = Interpreter()
   tokens = scanner.scan_tokens()
   parser = Parser(tokens)
-  expression = parser.parse()
+  statements = parser.parse()
 
   if had_error: return
 
-  interpreter.interpret(expression)
+  interpreter.interpret(statements)
 
 def run_file(filename) -> None:
   global had_error

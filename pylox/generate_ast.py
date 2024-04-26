@@ -4,23 +4,35 @@ from typing import List
 
 imports = [
     "from abc import ABC, abstractmethod",
-    "from typing import Any",
+    "from typing import Any, List",
     "from .token import Token"
 ]
 
 expr_definitions = [
+    "Assign   : Token name, Expr value",
     "Binary   : Expr left, Token operator, Expr right",
     "Grouping : Expr expression",
     "Literal  : Any value",
-    "Unary    : Token operator, Expr right"
+    "Unary    : Token operator, Expr right",
+    "Variable : Token name"
 ]
 
-def generate_file(class_definitions: List[str], base_name: str, save_path: str="lox"):
+stmt_definitions = [
+    "Block      : List[Stmt] statements",
+    "Expression : Expr expression",
+    "Print      : Expr expression",
+    "Var        : Token name, Expr initializer"
+]
+
+def generate_file(input_definitions: List[str], base_name: str, additional_imports=None, save_path: str="lox"):
+    global imports
     forward_declarations = ["# Forward declarations, needed for declaring visitor interface before the actual classes"]
     class_definitions = []
     visitor_methods = []
+    if additional_imports is not None:
+        imports = imports + additional_imports
 
-    for definition in expr_definitions:
+    for definition in input_definitions:
         class_name, fields = definition.split(":")
         class_name = class_name.strip()
         fields = [f.strip() for f in fields.split(",")]
@@ -90,3 +102,5 @@ def generate_file(class_definitions: List[str], base_name: str, save_path: str="
 
 expr_file = generate_file(expr_definitions, "Expr")
 print(f"File '{expr_file}' has been generated.")
+stmt_file = generate_file(stmt_definitions, "Stmt", additional_imports=["from .expr import Expr"])
+print(f"File '{stmt_file}' has been generated.")

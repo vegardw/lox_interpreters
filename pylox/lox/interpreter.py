@@ -1,15 +1,20 @@
 from .expr import *
+from .stmt import *
 from .token import *
 from .lox_runtime_error import LoxRuntimeError
 from .lox import runtime_error
-from typing import Any
+from .environment import Environment
+from typing import Any, List
 
-class Interpreter(ExprVisitor):
+class Interpreter(ExprVisitor, StmtVisitor):
 
-  def interpret(self, expression: Expr):
+  def __init__(self) -> None:
+    self.environment = Environment()
+
+  def interpret(self, statements: List[Stmt]):
     try:
-      value = self.evaluate(expression)
-      print(self.stringify(value))
+      for statement in statements:
+        self.execute(statement)
     except LoxRuntimeError as e:
       runtime_error(e)
 
@@ -30,6 +35,9 @@ class Interpreter(ExprVisitor):
     
     return None
   
+  def visit_variable_expr(self, expr: VariableExpr) -> Any:
+    return self.environment.get(expr.name)
+
   def visit_binary_expr(self, expr: BinaryExpr):
     left = self.evaluate(expr.left)
     right = self.evaluate(expr.right)
@@ -102,3 +110,38 @@ class Interpreter(ExprVisitor):
 
   def evaluate(self, expr: Expr) -> Any:
     return expr.accept(self)
+  
+  def execute(self, stmt: Stmt) -> None:
+    stmt.accept(self)
+
+  def execute_block(self, statements: List[Stmt], environment: Environment) -> None:
+    previous = self.environment
+    try:
+      self.environment = environment
+
+      for statement in statements:
+        self.execute(statement)
+    finally:
+      self.environment = previous
+
+  def visit_block_stmt(self, stmt: BlockStmt) -> None:
+    self.execute_block(stmt.statements, Environment(self.environment))
+  
+  def visit_expression_stmt(self, stmt: ExpressionStmt) -> None:
+    self.evaluate(stmt.expression)
+
+  def visit_print_stmt(self, stmt: PrintStmt) -> None:
+    value = self.evaluate(stmt.expression)
+    print(self.stringify(value))
+
+  def visit_var_stmt(self, stmt: VarStmt) -> None:
+    value = None
+    if stmt.initializer != None:
+      value = self.evaluate(stmt.initializer)
+
+      self.environment.define(stmt.name.lexeme, value)
+
+  def visit_assign_expr(self, expr: AssignExpr) -> Any:
+    value = self.evaluate(expr.value)
+    self.environment.assign(expr.name, value)
+    return value
