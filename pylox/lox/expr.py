@@ -8,6 +8,8 @@ class AssignExpr:
   pass
 class BinaryExpr:
   pass
+class CallExpr:
+  pass
 class GroupingExpr:
   pass
 class LiteralExpr:
@@ -27,6 +29,9 @@ class ExprVisitor(ABC):
     pass
   @abstractmethod
   def visit_binary_expr(self, expr: BinaryExpr):
+    pass
+  @abstractmethod
+  def visit_call_expr(self, expr: CallExpr):
     pass
   @abstractmethod
   def visit_grouping_expr(self, expr: GroupingExpr):
@@ -67,6 +72,15 @@ class BinaryExpr(Expr):
 
   def accept(self, visitor: ExprVisitor):
     return visitor.visit_binary_expr(self)
+
+class CallExpr(Expr):
+  def __init__(self, callee: Expr, paren: Token, arguments: List[Expr]) -> None:
+    self.callee = callee
+    self.paren = paren
+    self.arguments = arguments
+
+  def accept(self, visitor: ExprVisitor):
+    return visitor.visit_call_expr(self)
 
 class GroupingExpr(Expr):
   def __init__(self, expression: Expr) -> None:

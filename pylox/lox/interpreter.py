@@ -1,15 +1,33 @@
+from lox.lox_callable import Interpreter
 from .expr import *
 from .stmt import *
 from .token import *
+from .lox_callable import *
+from .lox_function import LoxFunction
 from .lox_runtime_error import LoxRuntimeError
 from .lox import runtime_error
 from .environment import Environment
+from .return_obj import Return
 from typing import Any, List
+from time import time
 
 class Interpreter(ExprVisitor, StmtVisitor):
 
   def __init__(self) -> None:
-    self.environment = Environment()
+    self.globals = Environment()
+    self.environment = self.globals
+
+    class ClockNativeFn(LoxCallable):
+      def arity(self) -> int:
+        return 0
+      
+      def call(self, interpreter: Interpreter, arguments: List[Any]):
+        return float(time())
+      
+      def __str__(self) -> str:
+        return "<native fn>"
+    
+    self.globals.define("clock", ClockNativeFn())
 
   def interpret(self, statements: List[Stmt]):
     try:
@@ -87,6 +105,21 @@ class Interpreter(ExprVisitor, StmtVisitor):
     # Unreachable
     return None
   
+  def visit_call_expr(self, expr: CallExpr) -> Any:
+    callee = self.evaluate(expr.callee)
+
+    arguments = []
+    for argument in expr.arguments:
+      arguments.append(self.evaluate(argument))
+
+    if not isinstance(callee, LoxCallable):
+      raise LoxRuntimeError(expr.paren, "Can only call functions and classes.")
+
+    fn: LoxCallable = callee
+    if len(arguments) != fn.arity():
+      raise LoxRuntimeError(expr.paren, f'Expected {fn.arity()} arguments but got {len(arguments)}.')
+    return fn.call(self, arguments)
+  
   def stringify(self, object: Any) -> str:
     if isinstance(object, float):
       text = str(object)
@@ -140,6 +173,10 @@ class Interpreter(ExprVisitor, StmtVisitor):
   def visit_expression_stmt(self, stmt: ExpressionStmt) -> None:
     self.evaluate(stmt.expression)
 
+  def visit_function_stmt(self, stmt: FunctionStmt) -> None:
+    fn = LoxFunction(stmt, self.environment)
+    self.environment.define(stmt.name.lexeme, fn)
+
   def visit_if_stmt(self, stmt: IfStmt) -> None:
     if self.is_truthy(self.evaluate(stmt.condition)):
       self.execute(stmt.thenBranch)
@@ -149,6 +186,12 @@ class Interpreter(ExprVisitor, StmtVisitor):
   def visit_print_stmt(self, stmt: PrintStmt) -> None:
     value = self.evaluate(stmt.expression)
     print(self.stringify(value))
+
+  def visit_return_stmt(self, stmt: ReturnStmt) -> None:
+    value = None
+    if stmt.value != None: value = self.evaluate(stmt.value)
+
+    raise Return(value)
 
   def visit_var_stmt(self, stmt: VarStmt) -> None:
     value = None

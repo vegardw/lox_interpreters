@@ -9,9 +9,13 @@ class BlockStmt:
   pass
 class ExpressionStmt:
   pass
+class FunctionStmt:
+  pass
 class IfStmt:
   pass
 class PrintStmt:
+  pass
+class ReturnStmt:
   pass
 class VarStmt:
   pass
@@ -28,10 +32,16 @@ class StmtVisitor(ABC):
   def visit_expression_stmt(self, stmt: ExpressionStmt):
     pass
   @abstractmethod
+  def visit_function_stmt(self, stmt: FunctionStmt):
+    pass
+  @abstractmethod
   def visit_if_stmt(self, stmt: IfStmt):
     pass
   @abstractmethod
   def visit_print_stmt(self, stmt: PrintStmt):
+    pass
+  @abstractmethod
+  def visit_return_stmt(self, stmt: ReturnStmt):
     pass
   @abstractmethod
   def visit_var_stmt(self, stmt: VarStmt):
@@ -61,6 +71,15 @@ class ExpressionStmt(Stmt):
   def accept(self, visitor: StmtVisitor):
     return visitor.visit_expression_stmt(self)
 
+class FunctionStmt(Stmt):
+  def __init__(self, name: Token, params: List[Token], body: List[Stmt]) -> None:
+    self.name = name
+    self.params = params
+    self.body = body
+
+  def accept(self, visitor: StmtVisitor):
+    return visitor.visit_function_stmt(self)
+
 class IfStmt(Stmt):
   def __init__(self, condition: Expr, thenBranch: Stmt, elseBranch: Stmt) -> None:
     self.condition = condition
@@ -76,6 +95,14 @@ class PrintStmt(Stmt):
 
   def accept(self, visitor: StmtVisitor):
     return visitor.visit_print_stmt(self)
+
+class ReturnStmt(Stmt):
+  def __init__(self, keyword: Token, value: Expr) -> None:
+    self.keyword = keyword
+    self.value = value
+
+  def accept(self, visitor: StmtVisitor):
+    return visitor.visit_return_stmt(self)
 
 class VarStmt(Stmt):
   def __init__(self, name: Token, initializer: Expr) -> None:
