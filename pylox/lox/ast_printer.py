@@ -15,9 +15,9 @@ class AstPrinter(ExprVisitor):
         return self.parenthesize('group', expr.expression)
     
     def visit_literal_expr(self, expr: LiteralExpr) -> str:
-        if expr.value is None: return 'nil'
-        if expr.value is True: return 'true'
-        if expr.value is False: return 'false'
+        if expr.value == None: return 'nil'
+        if expr.value == True: return 'true'
+        if expr.value == False: return 'false'
         return str(expr.value)
     
     def visit_unary_expr(self, expr: UnaryExpr) -> str:

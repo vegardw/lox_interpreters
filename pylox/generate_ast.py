@@ -13,6 +13,7 @@ expr_definitions = [
     "Binary   : Expr left, Token operator, Expr right",
     "Grouping : Expr expression",
     "Literal  : Any value",
+    "Logical  : Expr left, Token operator, Expr right",
     "Unary    : Token operator, Expr right",
     "Variable : Token name"
 ]
@@ -20,8 +21,10 @@ expr_definitions = [
 stmt_definitions = [
     "Block      : List[Stmt] statements",
     "Expression : Expr expression",
+    "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
     "Print      : Expr expression",
-    "Var        : Token name, Expr initializer"
+    "Var        : Token name, Expr initializer",
+    "While      : Expr condition, Stmt body"
 ]
 
 def generate_file(input_definitions: List[str], base_name: str, additional_imports=None, save_path: str="lox"):
@@ -29,7 +32,7 @@ def generate_file(input_definitions: List[str], base_name: str, additional_impor
     forward_declarations = ["# Forward declarations, needed for declaring visitor interface before the actual classes"]
     class_definitions = []
     visitor_methods = []
-    if additional_imports is not None:
+    if additional_imports != None:
         imports = imports + additional_imports
 
     for definition in input_definitions:
